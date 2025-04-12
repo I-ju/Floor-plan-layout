@@ -1,0 +1,150 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Floor Plan Layout</title>
+  <!-- Load jQuery UI CSS -->
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+</head>
+<body>
+  <h1>Floor Plan Layout</h1>
+
+  <!-- Container for the floor plan -->
+  <div id="floorplan-container" style="position: relative; width: 1000px; height: 500px;">
+    <!-- Background image -->
+    <img src="{% static 'images/image1.png' %}" 
+         style="position: absolute; top: 0; left: 0; width: 1000px; height: 500px; z-index: 1;">
+    
+    <!-- Layer for furniture -->
+    <div id="furniture-layer" style="position: absolute; top: 0; left: 0; width: 1000px; height: 500px; z-index: 2;"></div>
+  </div>
+
+  <!-- Buttons -->
+  <button id="add-square-btn">Add Furniture</button>
+  <button id="reset-layout-btn">Reset Layout</button>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Load jQuery UI -->
+  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+  <script>  
+
+    // 1. Load saved furniture data to restore layout
+    function loadFurnitures() {
+      $.ajax({
+        url: '/api/furnitures/',
+        type: 'GET',
+        success: function(res) {
+          const data = res.furnitures;
+          for (let i = 0; i < data.length; i++) {
+            createFurnitureDiv(data[i]);
+          }
+        }
+      });
+    }
+
+    // 2. Create draggable and resizable furniture
+    function createFurnitureDiv(f) {
+      let div = $(`
+        <div class="furniture-item" data-id="${f.id || ''}"
+             style="
+               position: absolute;
+               left: ${f.x}px;
+               top: ${f.y}px;
+               width: ${f.width}px;
+               height: ${f.height}px;
+               background-color: ${f.color || '#FFF68F'};
+               border: 2px solid #333;
+               box-sizing: border-box;
+               cursor: move;
+             ">
+        </div>
+      `);
+
+      div.draggable({
+        containment: "#floorplan-container",
+        stop: function(event, ui) {
+          saveFurniture(div);
+        }
+      }).resizable({
+        containment: "#floorplan-container",
+        stop: function(event, ui) {
+          saveFurniture(div);
+        }
+      });
+
+      $('#furniture-layer').append(div);
+    }
+
+    // 3. When Add Furniture button is clicked
+    $('#add-square-btn').on('click', function(){
+      let newObj = {
+        x: 10,
+        y: 10,
+        width: 100,
+        height: 100,
+        color: '#FFF68F'
+      };
+      createFurnitureDiv(newObj);
+      saveFurniture($('.furniture-item').last());
+    });
+
+    // 4. Save furniture data to the backend
+    function saveFurniture($div) {
+      let id = $div.attr('data-id');
+      let x = parseFloat($div.css('left'));
+      let y = parseFloat($div.css('top'));
+      let width = parseFloat($div.css('width'));
+      let height = parseFloat($div.css('height'));
+
+      $.ajax({
+        url: '/api/save_furniture/',
+        type: 'POST',
+        data: {
+          'id': id,
+          'x': x,
+          'y': y,
+          'width': width,
+          'height': height
+        },
+        success: function(res){
+          if (res.status === 'ok') {
+            if (!id) {
+              $div.attr('data-id', res.furniture_id);
+            }
+          } else {
+            alert('Save failed: ' + res.msg);
+          }
+        },
+        error: function(xhr, status, error){
+          alert('Error saving: ' + error);
+        }
+      });
+    }
+
+    // 5. Reset layout
+    $('#reset-layout-btn').on('click', function(){
+      $.ajax({
+        url: '/api/reset_layout/',
+        type: 'POST',
+        success: function(res) {
+          if (res.status === 'ok') {
+            location.reload();
+          } else {
+            alert('Reset failed: ' + res.msg);
+          }
+        },
+        error: function(xhr, status, error){
+          alert('Error resetting: ' + error);
+        }
+      });
+    });
+
+    // 6. Restore the saved layout
+    $(document).ready(function(){
+      loadFurnitures();
+    });
+  </script>
+</body>
+</html>
+
