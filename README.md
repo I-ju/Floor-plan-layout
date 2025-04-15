@@ -1,6 +1,6 @@
 # Floor-plan-layout
-Project Overview：
-This project is a Django-based web application that simulates a floor plan layout tool. The app displays a background image and allows users to add, move, and resize squares representing furniture. The positions and sizes of the squares are automatically saved in a database so that the layout can be restored when the page is reloaded. Additionally, the system prevents overlapping of the squares.
+Project Overview：  
+This project is a Django-based web application that simulates a floor plan layout tool. The app displays a background image and allows users to add, move, and resize squares representing furniture. The positions and sizes of the squares are automatically saved in a database so that the layout can be restored when the page is reloaded. Additionally, the system prevents overlapping of the squares.  
 
 Technologies Used：
 Python & Django for the backend
